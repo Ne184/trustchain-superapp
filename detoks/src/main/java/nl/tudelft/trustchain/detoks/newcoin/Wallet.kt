@@ -1,3 +1,5 @@
+package nl.tudelft.trustchain.detoks.newcoin
+
 import nl.tudelft.trustchain.detoks.Token
 import nl.tudelft.trustchain.detoks.newcoin.OfflineFriend
 import java.security.KeyPairGenerator

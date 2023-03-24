@@ -1,3 +1,5 @@
+package nl.tudelft.trustchain.detoks.newcoin
+
 import java.math.BigInteger
 import java.security.*
 import java.util.*
