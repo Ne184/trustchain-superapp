@@ -46,7 +46,7 @@ class Token(
         return true
     }
 
-    internal fun verifyRecipients(verifierKey: ByteArray): Boolean {
+    public fun verifyRecipients(verifierKey: ByteArray): Boolean {
         if (!(verifier contentEquals verifierKey)) {
             logger.info { "The token's verifier is not a known verifier!" }
             return false

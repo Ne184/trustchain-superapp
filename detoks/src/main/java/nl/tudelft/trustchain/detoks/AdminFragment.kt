@@ -66,6 +66,26 @@ class AdminFragment : BaseFragment(R.layout.fragment_admin) {
         println("Wallet B balance: ${userWallet.balance}")
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun recreateToken(oldToken: Token, wallet: AdminWallet, userWallet: Wallet) {
+        if(!oldToken.verifyRecipients(wallet.publicKey)) {
+            throw Exception("The token's verifier is not a known verifier!")
+        }
+
+        val myPrivateKey = getIpv8().myPeer.key as PrivateKey
+        val token = Token.create(oldToken.value, myPublicKey.keyToBin())
+        val proof = myPrivateKey.sign(token.id + token.value + token.genesisHash + myPublicKey.keyToBin())
+        token.recipients.add(RecipientPair(myPublicKey.keyToBin(), proof))
+
+        wallet.removeToken(oldToken)
+        userWallet.removeToken(oldToken)
+        wallet.addToken(token)
+        userWallet.addToken(token)
+
+        println("Wallet A balance: ${wallet.balance}")
+        println("Wallet B balance: ${userWallet.balance}")
+    }
+
     companion object {
         /**
          * Use this factory method to create a new instance of
