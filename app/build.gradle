@@ -85,6 +85,7 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    
     packagingOptions {
         resources {
             excludes += ['META-INF/kotlinx-coroutines-core.kotlin_module', 'META-INF/DEPENDENCIES']
