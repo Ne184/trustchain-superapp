@@ -9,25 +9,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.liveData
 import androidx.navigation.findNavController
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.mattskala.itemadapter.Item
 import com.mattskala.itemadapter.ItemAdapter
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import nl.tudelft.ipv8.keyvault.PrivateKey
 import nl.tudelft.trustchain.common.ui.BaseFragment
-import nl.tudelft.trustchain.common.util.viewBinding
-import nl.tudelft.trustchain.detoks.databinding.FragmentTokenListBinding
-import nl.tudelft.trustchain.detoks.databinding.WalletFragmentBinding
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -39,13 +31,20 @@ private const val ARG_PARAM2 = "param2"
  * Use the [WalletFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class WalletFragment : BaseFragment(R.layout.wallet_fragment) {
+class WalletFragment : BaseFragment(R.layout.wallet_fragment), TokenButtonListener {
     private var param1: String? = null
     private var param2: String? = null
     val myPublicKey = getIpv8().myPeer.publicKey
 
+
+    private val adapter = ItemAdapter()
+
+    private val items: LiveData<List<Item>> by lazy {
+        liveData { emit(listOf<Item>()) }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        adapter.registerRenderer(TokenAdminItemRenderer("user", this))
         arguments?.let {
             param1 = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
@@ -67,9 +66,14 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment) {
         super.onViewCreated(view, savedInstanceState)
         val wallet = Wallet.getInstance(view.context, myPublicKey, getIpv8().myPeer.key as PrivateKey)
         val createCoinButton = view.findViewById<Button>(R.id.button_create_coin)
+        val recyclerView: RecyclerView = view.findViewById(R.id.listView)
 
+        // Set Balance
         val balanceText = view.findViewById<TextView>(R.id.balance)
         balanceText.text = wallet.balance.toString()
+
+        var tokenList = wallet.getTokens().map { token: Token -> TokenItem(token) }
+        updateTokenList(tokenList, recyclerView, view)
 
         createCoinButton.setOnClickListener {
             // Create a new coin and add it to the wallet!
@@ -100,6 +104,11 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment) {
             buttonTokenList.setTextColor(resources.getColor(R.color.white, context?.theme));
             expiredTokens.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.light_gray, context?.theme));
             expiredTokens.setTextColor(resources.getColor(R.color.black, context?.theme));
+
+            // Update Recycler View with current tokens
+            tokenList = wallet.getTokens().map { token: Token -> TokenItem(token) }
+            updateTokenList(tokenList, recyclerView, view)
+
 //            val navController = view.findNavController()
 //            val bundle = Bundle().apply {
 //                putString("access", "user")
@@ -115,6 +124,9 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment) {
             expiredTokens.setTextColor(resources.getColor(R.color.white, context?.theme));
             buttonTokenList.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.light_gray, context?.theme));
             buttonTokenList.setTextColor(resources.getColor(R.color.black, context?.theme));
+
+            // Update Recycler View with expired tokens - currently empty
+            updateTokenList(emptyList(), recyclerView, view)
 //            val navController = view.findNavController()
 //            val bundle = Bundle().apply {
 //                putString("access", "user")
@@ -125,6 +137,15 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment) {
 
     }
 
+    private fun updateTokenList(
+        tokenList: List<TokenItem>,
+        recyclerView: RecyclerView,
+        view: View
+    ) {
+        adapter.updateItems(tokenList)
+        recyclerView.layoutManager = LinearLayoutManager(view.context)
+        recyclerView.adapter = adapter
+    }
 
     /**
      * Create a new token and add it to the wallet!
@@ -157,5 +178,32 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment) {
                     putString(ARG_PARAM2, param2)
                 }
             }
+    }
+
+    override fun onHistoryClick(token: Token, access: String) {
+        TODO("Not yet implemented")
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onVerifyClick(token: Token, access: String) {
+        val verified = verify(token, access)
+        if (verified) {
+            reissueToken(token, access)
+        }
+    }
+
+    fun verify(@Suppress("UNUSED_PARAMETER") token: Token, access: String): Boolean {
+        if (access != "admin") {
+            return false
+        }
+        return true
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun reissueToken(@Suppress("UNUSED_PARAMETER") token: Token, access: String) {
+        if (access != "admin") {
+            return
+        }
+        return
     }
 }
