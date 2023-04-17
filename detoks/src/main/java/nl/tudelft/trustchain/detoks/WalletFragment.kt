@@ -1,6 +1,7 @@
 package nl.tudelft.trustchain.detoks
 
 import Wallet
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -8,11 +9,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.liveData
 import androidx.navigation.findNavController
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.mattskala.itemadapter.Item
+import com.mattskala.itemadapter.ItemAdapter
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import nl.tudelft.ipv8.keyvault.PrivateKey
 import nl.tudelft.trustchain.common.ui.BaseFragment
+import nl.tudelft.trustchain.common.util.viewBinding
+import nl.tudelft.trustchain.detoks.databinding.FragmentTokenListBinding
+import nl.tudelft.trustchain.detoks.databinding.WalletFragmentBinding
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -28,9 +43,6 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment) {
     private var param1: String? = null
     private var param2: String? = null
     val myPublicKey = getIpv8().myPeer.publicKey
-//    var wallet = Wallet.getInstance(this, myPublicKey, getIpv8().myPeer.key as PrivateKey)
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,15 +90,41 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment) {
             navController.navigate(R.id.adminFragment)
         }
 
+        val expiredTokens = view.findViewById<Button>(R.id.expiredCoins)
         val buttonTokenList = view.findViewById<Button>(R.id.button_show)
+
         buttonTokenList.setOnClickListener {
-            val navController = view.findNavController()
-            val bundle = Bundle().apply {
-                putString("access", "user")
-            }
-            navController.navigate(R.id.tokenListAdmin, bundle)
+            buttonTokenList.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.gray,
+                context?.theme
+            ));
+            buttonTokenList.setTextColor(resources.getColor(R.color.white, context?.theme));
+            expiredTokens.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.light_gray, context?.theme));
+            expiredTokens.setTextColor(resources.getColor(R.color.black, context?.theme));
+//            val navController = view.findNavController()
+//            val bundle = Bundle().apply {
+//                putString("access", "user")
+//            }
+//            val items = wallet.getTokens().map { token: Token -> TokenItem(token) }
+//            navController.navigate(R.id.tokenListAdmin, bundle)
         }
+
+        expiredTokens.setOnClickListener {
+            expiredTokens.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.gray,
+                context?.theme
+            ));
+            expiredTokens.setTextColor(resources.getColor(R.color.white, context?.theme));
+            buttonTokenList.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.light_gray, context?.theme));
+            buttonTokenList.setTextColor(resources.getColor(R.color.black, context?.theme));
+//            val navController = view.findNavController()
+//            val bundle = Bundle().apply {
+//                putString("access", "user")
+//            }
+//            val items = wallet.getTokens().map { token: Token -> TokenItem(token) }
+//            navController.navigate(R.id.tokenListAdmin, bundle)
+        }
+
     }
+
 
     /**
      * Create a new token and add it to the wallet!
