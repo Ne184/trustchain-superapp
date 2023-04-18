@@ -20,6 +20,7 @@ import com.mattskala.itemadapter.Item
 import com.mattskala.itemadapter.ItemAdapter
 import nl.tudelft.ipv8.keyvault.PrivateKey
 import nl.tudelft.trustchain.common.ui.BaseFragment
+import java.time.LocalDateTime
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -72,7 +73,7 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment), TokenButtonListen
         val balanceText = view.findViewById<TextView>(R.id.balance)
         balanceText.text = wallet.balance.toString()
 
-        var tokenList = wallet.getTokens().map { token: Token -> TokenItem(token) }
+        var tokenList = getCurrentCoins(wallet.getTokens()).map { token: Token -> TokenItem(token) }
         updateTokenList(tokenList, recyclerView, view)
 
         createCoinButton.setOnClickListener {
@@ -106,7 +107,9 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment), TokenButtonListen
             expiredTokens.setTextColor(resources.getColor(R.color.black, context?.theme));
 
             // Update Recycler View with current tokens
-            tokenList = wallet.getTokens().map { token: Token -> TokenItem(token) }
+            val currentTokens = getCurrentCoins(wallet.getTokens())
+
+            tokenList = currentTokens.map { token: Token -> TokenItem(token) }
             updateTokenList(tokenList, recyclerView, view)
 
 //            val navController = view.findNavController()
@@ -125,8 +128,11 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment), TokenButtonListen
             buttonTokenList.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.light_gray, context?.theme));
             buttonTokenList.setTextColor(resources.getColor(R.color.black, context?.theme));
 
-            // Update Recycler View with expired tokens - currently empty
-            updateTokenList(emptyList(), recyclerView, view)
+            val expiredTokensList = getExpiredCoins(wallet.getTokens())
+
+            tokenList = expiredTokensList.map { token: Token -> TokenItem(token) }
+            updateTokenList(tokenList, recyclerView, view)
+
 //            val navController = view.findNavController()
 //            val bundle = Bundle().apply {
 //                putString("access", "user")
@@ -147,6 +153,29 @@ class WalletFragment : BaseFragment(R.layout.wallet_fragment), TokenButtonListen
         recyclerView.adapter = adapter
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun getCurrentCoins(tokens: MutableList<Token>): MutableList<Token> {
+        val currentTokens = mutableListOf<Token>()
+        for (i in tokens) {
+            if (LocalDateTime.now().minute - i.timestamp.minute < 3) {
+                print("Current: " + LocalDateTime.now().minute.toString() + " , Token: " + i.timestamp.minute.toString())
+                currentTokens.add(i)
+            }
+        }
+        return currentTokens
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun getExpiredCoins(tokens: MutableList<Token>): MutableList<Token> {
+        val expiredTokens = mutableListOf<Token>()
+        for (i in tokens) {
+            if (LocalDateTime.now().minute - i.timestamp.minute >= 3) {
+                print("Current: " + LocalDateTime.now().minute.toString() + " , Token: " + i.timestamp.minute.toString())
+                expiredTokens.add(i)
+            }
+        }
+        return expiredTokens
+    }
     /**
      * Create a new token and add it to the wallet!
      */
