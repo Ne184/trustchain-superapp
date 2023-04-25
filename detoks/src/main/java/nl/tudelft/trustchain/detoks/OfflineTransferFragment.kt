@@ -183,7 +183,7 @@ class OfflineTransferFragment : BaseFragment(R.layout.fragment_offline_transfer)
 
 
         if (content != null) {
-            val proba = ungzip(content)
+//            val proba = ungzip(content)
 
             val dateJsonDeserializer = object : JsonDeserializer<LocalDateTime> {
                 val  formatter : DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -197,7 +197,7 @@ class OfflineTransferFragment : BaseFragment(R.layout.fragment_offline_transfer)
             val gsonObject = GsonBuilder().registerTypeAdapter(LocalDateTime::class.java, dateJsonDeserializer).create()
 
             var map = object :  TypeToken<ArrayList<Token>>() {}.type
-            val result: ArrayList<Token> = gsonObject.fromJson(proba, map)
+            val result: ArrayList<Token> = gsonObject.fromJson(content, map)
 
             //TODO:check whether tokens are sent, but not sth else
             //TODO:check whether the tokens are not empty list
@@ -256,11 +256,11 @@ class OfflineTransferFragment : BaseFragment(R.layout.fragment_offline_transfer)
         val gsonObject = GsonBuilder().registerTypeAdapter(LocalDateTime::class.java, dateJsonSerializer).create()
 
         val result = gsonObject.toJson(newTokens)
-        val compressedJSONString = gzip(result)
+//        val compressedJSONString = gzip(result)
         hideKeyboard()
         lifecycleScope.launch {
             val bitmap = withContext(Dispatchers.Default) {
-                qrCodeUtils.createQR(compressedJSONString)
+                qrCodeUtils.createQR(result)
             }
             val qrCodeImage = view.findViewById<ImageView>(R.id.QR)
             qrCodeImage.setImageBitmap(bitmap)
